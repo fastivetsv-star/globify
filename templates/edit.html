@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card p-4 shadow border-top border-primary border-4">
+            <h3 class="text-center mb-4">✏️ Редагувати запис</h3>
+            
+            <form action="/edit_{{ category }}/{{ item.id }}" method="post">
+                <div class="mb-3">
+                    <label class="form-label text-muted fw-bold">Назва</label>
+                    <input type="text" name="title" class="form-control" value="{{ item.title }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted fw-bold">Автор / Режисер / Виконавець</label>
+                    <input type="text" name="author" class="form-control" value="{{ item.author }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted fw-bold">Оцінка (1-10)</label>
+                    <input type="number" name="rating" step="0.1" min="1" max="10" class="form-control" value="{{ item.rating }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted fw-bold">🔗 Посилання (опціонально)</label>
+                    <input type="url" name="link" class="form-control" value="{{ item.link or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted fw-bold">🖼️ Посилання на постер/обкладинку (опціонально)</label>
+                    <input type="url" name="image_url" class="form-control" value="{{ item.image_url or '' }}" placeholder="https://...">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-50 fw-bold">💾 Зберегти</button>
+                    <a href="/{{ return_url }}" class="btn btn-outline-secondary w-50 fw-bold">Скасувати</a>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

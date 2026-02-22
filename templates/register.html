@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card p-4 shadow border-top border-warning border-4">
+            <h3 class="text-center mb-4">Створити акаунт</h3>
+            <form action="/register" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Ваша Email-адреса</label>
+                    <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Придумайте логін</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ваш пароль</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-warning w-100 fw-bold mt-2">Зареєструватися</button>
+            </form>
+            <div class="text-center mt-3">
+                <small>Вже є акаунт? <a href="/login">Увійти</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

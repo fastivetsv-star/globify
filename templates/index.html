@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mt-4">
+    <h1 class="display-4 fw-bold">Ласкаво просимо до 🚀 GlobiFy!</h1>
+    <p class="lead text-muted">Твій персональний простір для збереження улюбленого контенту.</p>
+    
+    {% if user %}
+        <h3 class="mt-5 mb-4 text-secondary">📊 Твоя статистика:</h3>
+        
+        <div class="row justify-content-center g-4">
+            <div class="col-md-3">
+                <div class="card bg-info text-white shadow rounded-4 border-0 h-100">
+                    <div class="card-body py-4">
+                        <h5 class="card-title fw-bold">🎬 Фільми</h5>
+                        <p class="display-4 fw-bold">{{ films_count }}</p>
+                        <a href="/films" class="btn btn-light btn-sm w-100 text-info fw-bold rounded-pill">Перейти</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-primary text-white shadow rounded-4 border-0 h-100">
+                    <div class="card-body py-4">
+                        <h5 class="card-title fw-bold">📚 Книги</h5>
+                        <p class="display-4 fw-bold">{{ books_count }}</p>
+                        <a href="/books" class="btn btn-light btn-sm w-100 text-primary fw-bold rounded-pill">Перейти</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-success text-white shadow rounded-4 border-0 h-100">
+                    <div class="card-body py-4">
+                        <h5 class="card-title fw-bold">🎵 Музика</h5>
+                        <p class="display-4 fw-bold">{{ music_count }}</p>
+                        <a href="/music" class="btn btn-light btn-sm w-100 text-success fw-bold rounded-pill">Перейти</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-danger text-white shadow rounded-4 border-0 h-100">
+                    <div class="card-body py-4">
+                        <h5 class="card-title fw-bold">📹 Відео</h5>
+                        <p class="display-4 fw-bold">{{ videos_count }}</p>
+                        <a href="/video" class="btn btn-light btn-sm w-100 text-danger fw-bold rounded-pill">Перейти</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if my_films or my_books or my_music or my_videos %}
+                    <h3 class="mt-5 mb-4 text-start text-secondary border-bottom pb-2">📌 Мої закріплені матеріали:</h3>
+                    <div class="row text-start g-3 mb-5">
+                        
+                        {% if my_films %}
+                        <div class="col-md-6">
+                            <h5 class="text-info fw-bold mb-3">🎬 Мої фільми</h5>
+                            <div class="list-group shadow-sm">
+                                {% for item in my_films %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center border-info border-start border-4">
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image_url %}
+                                                <img src="{{ item.image_url }}" alt="Постер" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                            {% else %}
+                                                <div style="width: 40px; height: 60px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">🎬</div>
+                                            {% endif %}
+                                            <div><strong>{{ item.title }}</strong><br><small class="text-muted">({{ item.author }})</small></div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-warning text-dark rounded-pill">★ {{ item.rating }}</span>
+                                            {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-info ms-2 rounded-pill" title="Відкрити">🔗</a>{% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if my_books %}
+                        <div class="col-md-6">
+                            <h5 class="text-primary fw-bold mb-3">📚 Мої книги</h5>
+                            <div class="list-group shadow-sm">
+                                {% for item in my_books %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center border-primary border-start border-4">
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image_url %}
+                                                <img src="{{ item.image_url }}" alt="Обкладинка" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                            {% else %}
+                                                <div style="width: 40px; height: 60px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">📖</div>
+                                            {% endif %}
+                                            <div><strong>{{ item.title }}</strong><br><small class="text-muted">({{ item.author }})</small></div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-primary rounded-pill">📖 {{ item.rating }}</span>
+                                            {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2 rounded-pill" title="Відкрити">🔗</a>{% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if my_music %}
+                        <div class="col-md-6">
+                            <h5 class="text-success fw-bold mb-3">🎵 Моя музика</h5>
+                            <div class="list-group shadow-sm">
+                                {% for item in my_music %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center border-success border-start border-4">
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image_url %}
+                                                <img src="{{ item.image_url }}" alt="Альбом" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                            {% else %}
+                                                <div style="width: 50px; height: 50px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">🎵</div>
+                                            {% endif %}
+                                            <div><strong>{{ item.title }}</strong><br><small class="text-muted">({{ item.author }})</small></div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-success rounded-pill">🎵 {{ item.rating }}</span>
+                                            {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-success ms-2 rounded-pill" title="Слухати">🔗</a>{% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if my_videos %}
+                        <div class="col-md-6">
+                            <h5 class="text-danger fw-bold mb-3">📹 Мої відео</h5>
+                            <div class="list-group shadow-sm">
+                                {% for item in my_videos %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center border-danger border-start border-4">
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image_url %}
+                                                <img src="{{ item.image_url }}" alt="Прев'ю" style="width: 70px; height: 40px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                            {% else %}
+                                                <div style="width: 70px; height: 40px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">📹</div>
+                                            {% endif %}
+                                            <div><strong>{{ item.title }}</strong><br><small class="text-muted">({{ item.author }})</small></div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-danger rounded-pill">📹 {{ item.rating }}</span>
+                                            {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-danger ms-2 rounded-pill" title="Дивитись">🔗</a>{% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+        {% if global_films or global_books or global_music or global_videos %}
+            
+            <div class="d-flex justify-content-between align-items-center mt-5 mb-3 border-bottom pb-2">
+                <h3 class="text-secondary mb-0">🌍 Стрічка рекомендацій:</h3>
+                <button class="btn btn-outline-secondary rounded-pill fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#recommendationsCollapse" aria-expanded="false" title="Розгорнути / Згорнути рекомендації">
+                    👁️ Показати / Сховати
+                </button>
+            </div>
+
+            <div class="collapse" id="recommendationsCollapse">
+                <div class="row text-start g-3 mb-5">
+                    
+                    {% if global_films %}
+                    <div class="col-md-6">
+                        <h5 class="text-info fw-bold mb-3">🎬 Рекомендують фільми</h5>
+                        <div class="list-group shadow-sm">
+                            {% for item, owner in global_films %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-info border-start border-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.image_url %}
+                                            <img src="{{ item.image_url }}" alt="Постер" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                        {% else %}
+                                            <div style="width: 40px; height: 60px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">🎬</div>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ item.title }}</strong> <small class="text-muted">({{ item.author }})</small><br>
+                                            <small class="text-info fw-bold">👤 Від: {{ owner.username }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-warning text-dark rounded-pill">★ {{ item.rating }}</span>
+                                        {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-info ms-2 rounded-pill" title="Відкрити">🔗</a>{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if global_books %}
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold mb-3">📚 Рекомендують книги</h5>
+                        <div class="list-group shadow-sm">
+                            {% for item, owner in global_books %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-primary border-start border-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.image_url %}
+                                            <img src="{{ item.image_url }}" alt="Обкладинка" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                        {% else %}
+                                            <div style="width: 40px; height: 60px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">📖</div>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ item.title }}</strong> <small class="text-muted">({{ item.author }})</small><br>
+                                            <small class="text-primary fw-bold">👤 Від: {{ owner.username }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-primary rounded-pill">📖 {{ item.rating }}</span>
+                                        {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2 rounded-pill" title="Відкрити">🔗</a>{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if global_music %}
+                    <div class="col-md-6">
+                        <h5 class="text-success fw-bold mb-3">🎵 Рекомендують музику</h5>
+                        <div class="list-group shadow-sm">
+                            {% for item, owner in global_music %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-success border-start border-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.image_url %}
+                                            <img src="{{ item.image_url }}" alt="Альбом" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                        {% else %}
+                                            <div style="width: 50px; height: 50px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">🎵</div>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ item.title }}</strong> <small class="text-muted">({{ item.author }})</small><br>
+                                            <small class="text-success fw-bold">👤 Від: {{ owner.username }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-success rounded-pill">🎵 {{ item.rating }}</span>
+                                        {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-success ms-2 rounded-pill" title="Слухати">🔗</a>{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if global_videos %}
+                    <div class="col-md-6">
+                        <h5 class="text-danger fw-bold mb-3">📹 Рекомендують відео</h5>
+                        <div class="list-group shadow-sm">
+                            {% for item, owner in global_videos %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-danger border-start border-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.image_url %}
+                                            <img src="{{ item.image_url }}" alt="Прев'ю" style="width: 70px; height: 40px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                                        {% else %}
+                                            <div style="width: 70px; height: 40px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-4">📹</div>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ item.title }}</strong> <small class="text-muted">({{ item.author }})</small><br>
+                                            <small class="text-danger fw-bold">👤 Від: {{ owner.username }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-danger rounded-pill">📹 {{ item.rating }}</span>
+                                        {% if item.link %}<a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-danger ms-2 rounded-pill" title="Дивитись">🔗</a>{% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+            {% endif %}
+        
+    {% else %}
+        <div class="text-center mt-5">
+            <h1 class="display-4 fw-bold text-primary">Вітаємо у GlobiFy! 🌍</h1>
+            <p class="lead text-muted mt-3">Ваш персональний простір для збереження найкращих фільмів, книг, музики та відео.</p>
+            <hr class="w-50 mx-auto my-4">
+            <p class="fs-5">Щоб почати збирати свою колекцію, будь ласка, увійдіть або створіть акаунт.</p>
+            <div class="mt-4">
+                <a href="/login" class="btn btn-primary btn-lg px-5 rounded-pill shadow me-3">Увійти</a>
+                <a href="/register" class="btn btn-outline-primary btn-lg px-5 rounded-pill shadow">Реєстрація</a>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}

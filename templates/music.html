@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2 class="text-center mb-4">🎵 Мій Плейлист</h2>
+
+        <div class="card p-4 mb-4 bg-white shadow-sm">
+            <h5 class="card-title text-success">Додати трек</h5>
+            <form action="/add_music" method="post" class="row g-3">
+                <div class="col-md-5">
+                    <input type="text" name="title" class="form-control" placeholder="Назва треку" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="author" class="form-control" placeholder="Виконавець" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="rating" step="0.1" min="1" max="10" class="form-control" placeholder="Оцінка" required>
+                </div>
+                <div class="col-12">
+                    <input type="url" name="link" class="form-control" placeholder="🔗 Посилання на YouTube/Spotify">
+                </div>
+                <div class="col-12">
+                    <input type="url" name="image_url" class="form-control" placeholder="🖼️ Посилання на обкладинку альбому">
+                </div>
+                <div class="col-12 mt-2">
+                    <button type="submit" class="btn btn-success w-100 fw-bold">➕ Додати в плейлист</button>
+                </div>
+            </form>
+        </div>
+        
+        <hr>
+        <form action="/music" method="get" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="🔍 Який трек шукаємо?" value="{{ request.query_params.get('q', '') }}">
+                <button class="btn btn-success" type="submit">Знайти</button>
+                <a href="/music" class="btn btn-outline-secondary">Скинути</a>
+            </div>
+        </form>
+
+        {% if music %}
+            <div class="list-group">
+                {% for item in music %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center mb-2 shadow-sm rounded border-start border-success border-4">
+                        <div class="d-flex align-items-center">
+                            {% if item.image_url %}
+                                <img src="{{ item.image_url }}" alt="Обкладинка" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" class="me-3 shadow-sm">
+                            {% else %}
+                                <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 4px;" class="me-3 d-flex justify-content-center align-items-center fs-3">🎵</div>
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-1 fw-bold">{{ item.title }}</h5>
+                                <small class="text-muted">Виконавець: {{ item.author }}</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success fs-6 rounded-pill me-3">🎵 {{ item.rating }}</span>
+                            {% if item.link %}
+                                <a href="{{ item.link }}" target="_blank" class="btn btn-outline-success btn-sm me-2">🔗 Слухати</a>
+                            {% endif %}
+                            <a href="/share_music/{{ item.id }}" class="btn btn-sm {% if item.is_shared %}btn-warning{% else %}btn-outline-warning{% endif %} me-2">
+                                {% if item.is_shared %}🌟 Відкріпити{% else %}⭐ На головну{% endif %}
+                            </a>
+                            <a href="/edit_music/{{ item.id }}" class="btn btn-outline-secondary btn-sm me-2" title="Редагувати">✏️</a>
+                            <a href="/delete_music/{{ item.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Видалити цей трек?')">🗑️</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-success text-center mt-3 rounded-pill border-0 shadow-sm">
+                🎧 Тут поки порожньо. Який трек додамо першим?
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
