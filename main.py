@@ -38,7 +38,7 @@ SENDER_EMAIL = os.getenv("EMAIL_SENDER")
 SENDER_PASSWORD = os.getenv("EMAIL_PASSWORD")
 def send_verification_email(receiver_email: str, token: str):
     subject = "Підтвердження реєстрації на GlobiFy 🚀"
-    verification_link = f"http://127.0.0.1:8000/verify/{token}"
+    verification_link = f"https://globify-site.onrender.com/verify/{token}"
     
     html_content = f"""
     <html>
@@ -96,6 +96,7 @@ class UserDB(Base):
     avatar_url = Column(String, default="") # 👈 НОВЕ
     bio = Column(String, default="")
 
+
 class FilmDB(Base):
     __tablename__ = "films"
     id = Column(Integer, primary_key=True, index=True)
@@ -106,6 +107,7 @@ class FilmDB(Base):
     owner_id = Column(Integer)
     is_shared = Column(Boolean, default=False) # 👈 НОВИЙ РЯДОК
     image_url = Column(String, default="") # 👈 НОВИЙ РЯДОК
+
 class BookDB(Base):
     __tablename__ = "books"
     id = Column(Integer, primary_key=True, index=True)
@@ -137,9 +139,8 @@ class VideoDB(Base):
     owner_id = Column(Integer)
     is_shared = Column(Boolean, default=False)
     image_url = Column(String, default="")
-# Ця команда створить таблиці music та videos автоматично!
 Base.metadata.create_all(bind=engine)
-
+# Ця команда створить таблиці music та videos автоматично!
 # --- 3. НАЛАШТУВАННЯ ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 app = FastAPI()
