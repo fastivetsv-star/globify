@@ -59,7 +59,10 @@ def send_verification_email(receiver_email: str, token: str):
     msg.attach(MIMEText(html_content, "html"))
     
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()  # Цей рядок обов'язковий для порту 587! Він шифрує з'єднання.
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.send_message(msg)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
