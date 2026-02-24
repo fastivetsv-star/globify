@@ -63,11 +63,7 @@ def send_verification_email(receiver_email: str, token: str):
             server.starttls()  # Цей рядок обов'язковий для порту 587! Він шифрує з'єднання.
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.send_message(msg)
-        server.starttls()
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
-        server.quit()
-        print(f"✅ УРА! Лист успішно відправлено на {receiver_email}")
+            print(f"✅ УРА! Лист успішно відправлено на {receiver_email}")
     except Exception as e:
         print(f"❌ Помилка відправки листа: {e}")
 # Хешування паролів
