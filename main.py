@@ -36,6 +36,7 @@ Base = declarative_base()
 # 4. Налаштування Пошти
 SENDER_EMAIL = os.getenv("EMAIL_SENDER")
 SENDER_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
 def send_verification_email(receiver_email: str, token: str):
     subject = "Підтвердження реєстрації на GlobiFy 🚀"
     verification_link = f"https://globify-site.onrender.com/verify/{token}"
@@ -66,23 +67,12 @@ def send_verification_email(receiver_email: str, token: str):
             print(f"✅ УРА! Лист успішно відправлено на {receiver_email}")
     except Exception as e:
         print(f"❌ Помилка відправки листа: {e}")
+        # Хакерське посилання для логів:
+        print(f"🔥 ХАКЕРСЬКЕ ПОСИЛАННЯ ДЛЯ ПІДТВЕРДЖЕННЯ: {verification_link}")
+
 # Хешування паролів
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Залежність для бази даних
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# Функція для отримання поточного користувача
-def get_current_user(request: Request, db: Session):
-    username = request.session.get("user")
-    if username:
-        return db.query(UserDB).filter(UserDB.username == username).first()
-    return None
 # --- 2. МОДЕЛІ ДАНИХ ---
 class UserDB(Base):
     __tablename__ = "users"
@@ -92,9 +82,8 @@ class UserDB(Base):
     hashed_password = Column(String)
     is_verified = Column(Boolean, default=False)
     verify_token = Column(String)
-    avatar_url = Column(String, default="") # 👈 НОВЕ
+    avatar_url = Column(String, default="")
     bio = Column(String, default="")
-
 
 class FilmDB(Base):
     __tablename__ = "films"
@@ -102,10 +91,10 @@ class FilmDB(Base):
     title = Column(String, index=True)
     author = Column(String)
     rating = Column(Float)
-    link = Column(String) # НОВЕ ПОЛЕ
+    link = Column(String)
     owner_id = Column(Integer)
-    is_shared = Column(Boolean, default=False) # 👈 НОВИЙ РЯДОК
-    image_url = Column(String, default="") # 👈 НОВИЙ РЯДОК
+    is_shared = Column(Boolean, default=False)
+    image_url = Column(String, default="")
 
 class BookDB(Base):
     __tablename__ = "books"
@@ -113,11 +102,11 @@ class BookDB(Base):
     title = Column(String, index=True)
     author = Column(String)
     rating = Column(Float)
-    link = Column(String) # НОВЕ ПОЛЕ
+    link = Column(String)
     owner_id = Column(Integer)
     is_shared = Column(Boolean, default=False)
     image_url = Column(String, default="")
-# --- НОВІ МОДЕЛІ ДЛЯ МУЗИКИ ТА ВІДЕО ---
+
 class MusicDB(Base):
     __tablename__ = "music"
     id = Column(Integer, primary_key=True, index=True)
@@ -128,6 +117,7 @@ class MusicDB(Base):
     owner_id = Column(Integer)
     is_shared = Column(Boolean, default=False)
     image_url = Column(String, default="")
+
 class VideoDB(Base):
     __tablename__ = "videos"
     id = Column(Integer, primary_key=True, index=True)
@@ -138,17 +128,11 @@ class VideoDB(Base):
     owner_id = Column(Integer)
     is_shared = Column(Boolean, default=False)
     image_url = Column(String, default="")
-Base.metadata.create_all(bind=engine)
-# Ця команда створить таблиці music та videos автоматично!
-# --- 3. НАЛАШТУВАННЯ ---
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="super-secret-password-123")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-UPLOAD_DIR = "static/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Створюємо таблиці
+Base.metadata.create_all(bind=engine)
+
+# --- 4. ДОПОМІЖНІ ФУНКЦІЇ ---
 def get_db():
     db = SessionLocal()
     try:
@@ -156,14 +140,13 @@ def get_db():
     finally:
         db.close()
 
-# --- 4. ДОПОМІЖНА ФУНКЦІЯ ---
-# Ця функція знаходить користувача в базі за його логіном із сесії
 def get_current_user(request: Request, db: Session):
     username = request.session.get("user")
     if not username:
         return None
     user = db.query(UserDB).filter(UserDB.username == username).first()
     return user
+
 
 # --- 5. МАРШРУТИ ---
 
@@ -180,13 +163,13 @@ async def home(request: Request, db: Session = Depends(get_db)):
     music_count = db.query(MusicDB).filter(MusicDB.owner_id == current_user.id).count()
     videos_count = db.query(VideoDB).filter(VideoDB.owner_id == current_user.id).count()
     
-    # 📌 1. МОЇ закріплені матеріали (сортуємо за рейтингом)
+    # 📌 1. МОЇ закріплені матеріали
     my_films = db.query(FilmDB).filter(FilmDB.owner_id == current_user.id, FilmDB.is_shared == True).order_by(FilmDB.rating.desc()).all()
     my_books = db.query(BookDB).filter(BookDB.owner_id == current_user.id, BookDB.is_shared == True).order_by(BookDB.rating.desc()).all()
     my_music = db.query(MusicDB).filter(MusicDB.owner_id == current_user.id, MusicDB.is_shared == True).order_by(MusicDB.rating.desc()).all()
     my_videos = db.query(VideoDB).filter(VideoDB.owner_id == current_user.id, VideoDB.is_shared == True).order_by(VideoDB.rating.desc()).all()
 
-    # 🌍 2. ГЛОБАЛЬНА СТРІЧКА (сортуємо за рейтингом)
+    # 🌍 2. ГЛОБАЛЬНА СТРІЧКА
     global_films = db.query(FilmDB, UserDB).join(UserDB, FilmDB.owner_id == UserDB.id).filter(FilmDB.is_shared == True, FilmDB.owner_id != current_user.id).order_by(FilmDB.rating.desc()).all()
     global_books = db.query(BookDB, UserDB).join(UserDB, BookDB.owner_id == UserDB.id).filter(BookDB.is_shared == True, BookDB.owner_id != current_user.id).order_by(BookDB.rating.desc()).all()
     global_music = db.query(MusicDB, UserDB).join(UserDB, MusicDB.owner_id == UserDB.id).filter(MusicDB.is_shared == True, MusicDB.owner_id != current_user.id).order_by(MusicDB.rating.desc()).all()
@@ -208,6 +191,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
         "global_music": global_music,
         "global_videos": global_videos
     })
+
 # --- РЕЄСТРАЦІЯ ---
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
@@ -215,18 +199,16 @@ async def register_page(request: Request):
 
 @app.post("/register")
 async def register_user(username: str = Form(...), email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    # Перевіряємо, чи немає вже такого логіна або пошти
     if db.query(UserDB).filter((UserDB.username == username) | (UserDB.email == email)).first():
         return HTMLResponse("<h3>Користувач з таким логіном або поштою вже існує! <a href='/register'>Назад</a></h3>")
     
     hashed_pass = pwd_context.hash(password)
-    token = str(uuid.uuid4()) # Генеруємо випадковий унікальний код
+    token = str(uuid.uuid4())
     
     new_user = UserDB(username=username, email=email, hashed_password=hashed_pass, is_verified=False, verify_token=token)
     db.add(new_user)
     db.commit()
 
-    # 👇 ВІДПРАВЛЯЄМО СПРАВЖНІЙ ЛИСТ НА ПОШТУ 👇
     send_verification_email(email, token)
 
     return HTMLResponse(f"""
@@ -237,15 +219,14 @@ async def register_user(username: str = Form(...), email: str = Form(...), passw
         </div>
     """)
 
-# 👇 НОВИЙ МАРШРУТ: Сюди юзер потрапляє, коли клікає по посиланню з листа
 @app.get("/verify/{token}")
 async def verify_email(token: str, db: Session = Depends(get_db)):
     user = db.query(UserDB).filter(UserDB.verify_token == token).first()
     if not user:
         return HTMLResponse("<h3 style='text-align:center; color:red;'>❌ Недійсне посилання або акаунт вже підтверджено!</h3>")
     
-    user.is_verified = True # Підтверджуємо!
-    user.verify_token = ""  # Видаляємо токен
+    user.is_verified = True
+    user.verify_token = ""
     db.commit()
     return HTMLResponse("<h3 style='text-align:center; color:green; mt-5'>✅ Пошту успішно підтверджено! Тепер ви можете <a href='/login'>увійти</a>.</h3>")
 
@@ -261,17 +242,20 @@ async def login_user(request: Request, username: str = Form(...), password: str 
     if not user or not pwd_context.verify(password, user.hashed_password):
         return HTMLResponse("<h3>Невірний логін або пароль! <a href='/login'>Спробувати ще раз</a></h3>")
     
-    # 👇 НОВА ПЕРЕВІРКА: чи підтверджена пошта?
     if not user.is_verified:
         return HTMLResponse("<h3>⚠️ Ваш акаунт не підтверджено! Перевірте електронну пошту. <a href='/login'>Назад</a></h3>")
         
     request.session["user"] = user.username
     return RedirectResponse(url="/", status_code=303)
 
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
+
 # --- МІЙ ПРОФІЛЬ ---
 @app.get("/profile", response_class=HTMLResponse)
 async def profile_page(request: Request, db: Session = Depends(get_db)):
-    # Отримуємо всі дані поточного користувача
     current_user = get_current_user(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
@@ -290,14 +274,12 @@ async def update_profile(
         current_user.bio = bio
         
         if avatar_file and avatar_file.filename:
-            # 🛡️ ОХОРОНЕЦЬ: Перевіряємо формат файлу
             allowed_extensions = {"jpg", "jpeg", "png", "webp"}
             file_extension = avatar_file.filename.split(".")[-1].lower()
             
             if file_extension not in allowed_extensions:
                 return HTMLResponse("<h3 style='text-align:center; color:red; margin-top:50px;'>❌ Помилка: Можна завантажувати тільки картинки (.jpg, .png, .webp)! <br><br><a href='/profile'>Повернутися назад</a></h3>")
             
-            # Якщо це картинка - зберігаємо
             new_filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:8]}.{file_extension}"
             file_path = os.path.join(UPLOAD_DIR, new_filename)
             
@@ -309,156 +291,121 @@ async def update_profile(
         db.commit()
     return RedirectResponse(url="/profile", status_code=303)
 
-@app.get("/logout")
-async def logout(request: Request):
-    request.session.clear()
-    return RedirectResponse(url="/", status_code=303)
-
-# --- Оновлений маршрут /films з пошуком ---
-
+# --- КАТАЛОГИ ---
 @app.get("/films", response_class=HTMLResponse)
 async def films_list(request: Request, q: str = None, db: Session = Depends(get_db)):
-    # 1. Знаходимо, хто зараз на сайті
     current_user = get_current_user(request, db)
-    
-    # 2. Якщо нікого немає - відправляємо на вхід
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    # 3. Починаємо формувати запит до бази (тільки фільми цього користувача)
+    if not current_user: return RedirectResponse(url="/login", status_code=303)
     query = db.query(FilmDB).filter(FilmDB.owner_id == current_user.id)
-
-    # 4. Якщо користувач щось шукає (q не порожній) - додаємо фільтр
-    if q:
-        # ilike означає "шукати схоже", не звертаючи уваги на великі/малі літери
-        query = query.filter(FilmDB.title.ilike(f"%{q}%"))
-
+    if q: query = query.filter(FilmDB.title.ilike(f"%{q}%"))
     films = query.order_by(FilmDB.rating.desc()).all()
-    
     return templates.TemplateResponse("films.html", {"request": request, "films": films, "user": current_user.username})
 
+@app.get("/books", response_class=HTMLResponse)
+async def books_list(request: Request, q: str = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(request, db)
+    if not current_user: return RedirectResponse(url="/login", status_code=303)
+    query = db.query(BookDB).filter(BookDB.owner_id == current_user.id)
+    if q: query = query.filter(BookDB.title.ilike(f"%{q}%"))
+    books = query.order_by(BookDB.rating.desc()).all()
+    return templates.TemplateResponse("books.html", {"request": request, "books": books, "user": current_user.username})
+
+@app.get("/music", response_class=HTMLResponse)
+async def music_list(request: Request, q: str = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(request, db)
+    if not current_user: return RedirectResponse(url="/login", status_code=303)
+    query = db.query(MusicDB).filter(MusicDB.owner_id == current_user.id)
+    if q: query = query.filter(MusicDB.title.ilike(f"%{q}%"))
+    music = query.order_by(MusicDB.rating.desc()).all()
+    return templates.TemplateResponse("music.html", {"request": request, "music": music, "user": current_user.username})
+
+@app.get("/video", response_class=HTMLResponse)
+async def video_list(request: Request, q: str = None, db: Session = Depends(get_db)):
+    current_user = get_current_user(request, db)
+    if not current_user: return RedirectResponse(url="/login", status_code=303)
+    query = db.query(VideoDB).filter(VideoDB.owner_id == current_user.id)
+    if q: query = query.filter(VideoDB.title.ilike(f"%{q}%"))
+    videos = query.order_by(VideoDB.rating.desc()).all()
+    return templates.TemplateResponse("video.html", {"request": request, "videos": videos, "user": current_user.username})
+
+# --- ДОДАВАННЯ ---
 @app.post("/add_film")
 async def add_new_film(request: Request, title: str = Form(...), author: str = Form(...), rating: float = Form(...), link: str = Form(""), image_url: str = Form(""), db: Session = Depends(get_db)):
     current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    new_film = FilmDB(title=title, author=author, rating=rating, link=link, image_url=image_url, owner_id=current_user.id)
-    db.add(new_film)
-    db.commit()
+    if current_user:
+        new_item = FilmDB(title=title, author=author, rating=rating, link=link, image_url=image_url, owner_id=current_user.id)
+        db.add(new_item)
+        db.commit()
     return RedirectResponse(url="/films", status_code=303)
 
 @app.post("/add_book")
 async def add_new_book(request: Request, title: str = Form(...), author: str = Form(...), rating: float = Form(...), link: str = Form(""), db: Session = Depends(get_db)):
     current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    new_book = BookDB(title=title, author=author, rating=rating, link=link, owner_id=current_user.id)
-    db.add(new_book)
-    db.commit()
+    if current_user:
+        new_item = BookDB(title=title, author=author, rating=rating, link=link, owner_id=current_user.id)
+        db.add(new_item)
+        db.commit()
     return RedirectResponse(url="/books", status_code=303)
-
-
-# --- Оновлений маршрут /books з пошуком ---
-@app.get("/books", response_class=HTMLResponse)
-async def books_list(request: Request, q: str = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    # Починаємо формувати запит (тільки книги цього користувача)
-    query = db.query(BookDB).filter(BookDB.owner_id == current_user.id)
-
-    # Якщо є запит на пошук - фільтруємо за назвою книги
-    if q:
-        query = query.filter(BookDB.title.ilike(f"%{q}%"))
-
-    books = query.order_by(BookDB.rating.desc()).all()
-    
-    return templates.TemplateResponse("books.html", {"request": request, "books": books, "user": current_user.username})
-# --- ВИДАЛЕННЯ ФІЛЬМІВ ---
-@app.get("/delete_film/{film_id}")
-async def delete_film(film_id: int, request: Request, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    # Шукаємо фільм. ВАЖЛИВО: перевіряємо, чи належить він саме цьому користувачу!
-    film = db.query(FilmDB).filter(FilmDB.id == film_id, FilmDB.owner_id == current_user.id).first()
-    
-    if film:
-        db.delete(film)  # Видаляємо з бази
-        db.commit()      # Зберігаємо зміни
-        
-    return RedirectResponse(url="/films", status_code=303)
-
-# ================= МУЗИКА =================
-@app.get("/music", response_class=HTMLResponse)
-async def music_list(request: Request, q: str = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    query = db.query(MusicDB).filter(MusicDB.owner_id == current_user.id)
-    if q:
-        query = query.filter(MusicDB.title.ilike(f"%{q}%"))
-    
-    music = query.order_by(MusicDB.rating.desc()).all()
-    return templates.TemplateResponse("music.html", {"request": request, "music": music, "user": current_user.username})
 
 @app.post("/add_music")
 async def add_new_music(request: Request, title: str = Form(...), author: str = Form(...), rating: float = Form(...), link: str = Form(""), db: Session = Depends(get_db)):
     current_user = get_current_user(request, db)
-    if not current_user: return RedirectResponse(url="/login", status_code=303)
-    new_music = MusicDB(title=title, author=author, rating=rating, link=link, owner_id=current_user.id)
-    db.add(new_music)
-    db.commit()
-    return RedirectResponse(url="/music", status_code=303)
-
-@app.get("/delete_music/{item_id}")
-async def delete_music(item_id: int, request: Request, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
     if current_user:
-        item = db.query(MusicDB).filter(MusicDB.id == item_id, MusicDB.owner_id == current_user.id).first()
-        if item:
-            db.delete(item)
-            db.commit()
+        new_item = MusicDB(title=title, author=author, rating=rating, link=link, owner_id=current_user.id)
+        db.add(new_item)
+        db.commit()
     return RedirectResponse(url="/music", status_code=303)
-
-# ================= ВІДЕО =================
-@app.get("/video", response_class=HTMLResponse)
-async def video_list(request: Request, q: str = None, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
-
-    query = db.query(VideoDB).filter(VideoDB.owner_id == current_user.id)
-    if q:
-        query = query.filter(VideoDB.title.ilike(f"%{q}%"))
-    
-    videos = query.order_by(VideoDB.rating.desc()).all()
-    return templates.TemplateResponse("video.html", {"request": request, "videos": videos, "user": current_user.username})
 
 @app.post("/add_video")
 async def add_new_video(request: Request, title: str = Form(...), author: str = Form(...), rating: float = Form(...), link: str = Form(""), db: Session = Depends(get_db)):
     current_user = get_current_user(request, db)
-    if not current_user: return RedirectResponse(url="/login", status_code=303)
-    new_video = VideoDB(title=title, author=author, rating=rating, link=link, owner_id=current_user.id)
-    db.add(new_video)
-    db.commit()
+    if current_user:
+        new_item = VideoDB(title=title, author=author, rating=rating, link=link, owner_id=current_user.id)
+        db.add(new_item)
+        db.commit()
     return RedirectResponse(url="/video", status_code=303)
+
+# --- ВИДАЛЕННЯ ---
+@app.get("/delete_film/{item_id}")
+async def delete_film(item_id: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if user:
+        item = db.query(FilmDB).filter(FilmDB.id == item_id, FilmDB.owner_id == user.id).first()
+        if item:
+            db.delete(item)
+            db.commit()
+    return RedirectResponse(url="/films", status_code=303)
+
+@app.get("/delete_book/{item_id}")
+async def delete_book(item_id: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if user:
+        item = db.query(BookDB).filter(BookDB.id == item_id, BookDB.owner_id == user.id).first()
+        if item:
+            db.delete(item)
+            db.commit()
+    return RedirectResponse(url="/books", status_code=303)
+
+@app.get("/delete_music/{item_id}")
+async def delete_music(item_id: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if user:
+        item = db.query(MusicDB).filter(MusicDB.id == item_id, MusicDB.owner_id == user.id).first()
+        if item:
+            db.delete(item)
+            db.commit()
+    return RedirectResponse(url="/music", status_code=303)
 
 @app.get("/delete_video/{item_id}")
 async def delete_video(item_id: int, request: Request, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
-    if current_user:
-        item = db.query(VideoDB).filter(VideoDB.id == item_id, VideoDB.owner_id == current_user.id).first()
+    user = get_current_user(request, db)
+    if user:
+        item = db.query(VideoDB).filter(VideoDB.id == item_id, VideoDB.owner_id == user.id).first()
         if item:
             db.delete(item)
             db.commit()
     return RedirectResponse(url="/video", status_code=303)
-#-------------
+
 # --- РЕПОСТИ (ПОШИРЕННЯ) ---
 @app.get("/share_film/{item_id}")
 async def share_film(item_id: int, request: Request, db: Session = Depends(get_db)):
@@ -466,7 +413,7 @@ async def share_film(item_id: int, request: Request, db: Session = Depends(get_d
     if user:
         item = db.query(FilmDB).filter(FilmDB.id == item_id, FilmDB.owner_id == user.id).first()
         if item:
-            item.is_shared = not item.is_shared  # Перемикач
+            item.is_shared = not item.is_shared
             db.commit()
     return RedirectResponse(url="/films", status_code=303)
 
@@ -499,24 +446,8 @@ async def share_video(item_id: int, request: Request, db: Session = Depends(get_
             item.is_shared = not item.is_shared
             db.commit()
     return RedirectResponse(url="/video", status_code=303)
-# --- ВИДАЛЕННЯ КНИГ ---
-@app.get("/delete_book/{book_id}")
-async def delete_book(book_id: int, request: Request, db: Session = Depends(get_db)):
-    current_user = get_current_user(request, db)
-    if not current_user:
-        return RedirectResponse(url="/login", status_code=303)
 
-    # Шукаємо книгу та перевіряємо власника
-    book = db.query(BookDB).filter(BookDB.id == book_id, BookDB.owner_id == current_user.id).first()
-    
-    if book:
-        db.delete(book)
-        db.commit()
-        
-    return RedirectResponse(url="/books", status_code=303)
-# ================= РЕДАГУВАННЯ ЗАПИСІВ =================
-
-# 🎬 ФІЛЬМИ
+# --- РЕДАГУВАННЯ ЗАПИСІВ ---
 @app.get("/edit_film/{item_id}", response_class=HTMLResponse)
 async def edit_film_page(item_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -534,7 +465,6 @@ async def edit_film_post(item_id: int, request: Request, title: str = Form(...),
             db.commit()
     return RedirectResponse(url="/films", status_code=303)
 
-# 📚 КНИГИ
 @app.get("/edit_book/{item_id}", response_class=HTMLResponse)
 async def edit_book_page(item_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -552,7 +482,6 @@ async def edit_book_post(item_id: int, request: Request, title: str = Form(...),
             db.commit()
     return RedirectResponse(url="/books", status_code=303)
 
-# 🎵 МУЗИКА
 @app.get("/edit_music/{item_id}", response_class=HTMLResponse)
 async def edit_music_page(item_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -570,7 +499,6 @@ async def edit_music_post(item_id: int, request: Request, title: str = Form(...)
             db.commit()
     return RedirectResponse(url="/music", status_code=303)
 
-# 📹 ВІДЕО
 @app.get("/edit_video/{item_id}", response_class=HTMLResponse)
 async def edit_video_page(item_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
